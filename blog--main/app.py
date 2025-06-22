@@ -243,6 +243,7 @@ class ResearchAgents:
                 technical accuracy while improving readability and flow.
             """),
             llm=llm,
+            tools=[],
             verbose=True,
             allow_delegation=False
         )
@@ -251,13 +252,14 @@ class ResearchAgents:
     def create_formatter(llm):
         return Agent(
             role='Content Formatter',
-            goal='Format content for various output formats while maintaining structure',
+            goal='Format content for clean, professional presentation',
             backstory=dedent("""
-                You are an expert in content formatting and presentation. You ensure
-                that content is properly structured for different output formats
-                while maintaining readability and professional appearance.
+                You are a detail-oriented content formatter with expertise in 
+                creating clean, well-structured documents. You ensure content is organized 
+                logically and presented professionally.
             """),
             llm=llm,
+            tools=[],
             verbose=True,
             allow_delegation=False
         )
