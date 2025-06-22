@@ -46,6 +46,7 @@ from dotenv import load_dotenv
 import re
 from textwrap import dedent
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.agents import Tool
 
 # Load environment variables
 load_dotenv()
@@ -217,6 +218,23 @@ class ResearchConverter:
 class ResearchAgents:
     @staticmethod
     def create_researcher(llm, search_tool):
+        """Create an agent for researching and extracting insights.
+        
+        Args:
+            llm: Language model to use
+            search_tool: Tool for searching document content
+            
+        Returns:
+            Configured Agent instance
+        """
+        # Ensure search_tool is a Tool instance
+        if not isinstance(search_tool, Tool):
+            search_tool = Tool(
+                name="Search Document",
+                func=search_tool,
+                description="Search and extract information from the document. Use 'extract all' to get the complete document content."
+            )
+            
         return Agent(
             role='Research Analyst',
             goal='Extract and organize information from research documents',
@@ -963,7 +981,7 @@ Please provide a clear and accurate translation while keeping technical terminol
 
 def create_search_tool(text):
     """Create a search tool that works with decoded/translated text."""
-    def search_tool(query):
+    def search_func(query):
         """Custom search tool that searches through our processed text."""
         try:
             # If query is a dict with "extract all", return full text
@@ -978,7 +996,11 @@ def create_search_tool(text):
             print(f"Search error: {str(e)}")
             return text
     
-    return search_tool
+    return Tool(
+        name="Search Document",
+        func=search_func,
+        description="Search and extract information from the document. Use 'extract all' to get the complete document content."
+    )
 
 def research_converter_page():
     st.title("Research PDF Converter")
@@ -991,9 +1013,17 @@ def research_converter_page():
         st.session_state.processed_text = None
         st.session_state.translated_text = None
         st.session_state.search_tool = None
+        st.session_state.selected_model = "gemini-2.0-flash"  # Default model
 
     # Ensure the exports directory exists
     ensure_export_dir()
+
+    # Model selection
+    st.session_state.selected_model = st.selectbox(
+        "Select Model",
+        options=AVAILABLE_MODELS,
+        index=AVAILABLE_MODELS.index(st.session_state.selected_model)
+    )
 
     # Simple file uploaders
     uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
