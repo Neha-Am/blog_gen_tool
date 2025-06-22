@@ -17,18 +17,6 @@ class ResearchAgents:
         Returns:
             Configured Agent instance
         """
-        tools = [
-            Tool(
-                name="SearchPDF",
-                func=pdf_tool,
-                description="""Search and extract information from the PDF document. 
-                The document is pre-processed with encoding detection and contains page markers.
-                Use 'extract all' to get the complete document content."""
-            )
-        ]
-        
-        memory = ConversationBufferMemory(memory_key="chat_history")
-        
         return Agent(
             role='Research Analyst',
             goal='Extract and analyze key information from research documents',
@@ -38,8 +26,8 @@ class ResearchAgents:
             You understand the importance of handling different text encodings and can
             work with documents that may contain special characters or technical notation.""",
             llm=llm,
-            tools=tools,
-            memory=memory,
+            tools=[pdf_tool],
+            memory=ConversationBufferMemory(memory_key="chat_history"),
             allow_delegation=False,
             verbose=True
         )
