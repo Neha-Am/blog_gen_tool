@@ -227,13 +227,20 @@ class ResearchAgents:
         Returns:
             Configured Agent instance
         """
-        # Ensure search_tool is a Tool instance
-        if not isinstance(search_tool, Tool):
-            search_tool = Tool(
+        # Ensure we have a valid tool
+        if search_tool is None:
+            raise ValueError("search_tool cannot be None")
+            
+        # If it's already a Tool instance, use it directly
+        if isinstance(search_tool, Tool):
+            tools = [search_tool]
+        else:
+            # If it's a function, wrap it in a Tool
+            tools = [Tool(
                 name="Search Document",
                 func=search_tool,
                 description="Search and extract information from the document. Use 'extract all' to get the complete document content."
-            )
+            )]
             
         return Agent(
             role='Research Analyst',
@@ -245,7 +252,7 @@ class ResearchAgents:
                 maintaining the original context and accuracy of the source material.
             """),
             llm=llm,
-            tools=[search_tool],
+            tools=tools,
             verbose=True,
             allow_delegation=False
         )
@@ -980,7 +987,17 @@ Please provide a clear and accurate translation while keeping technical terminol
         return text
 
 def create_search_tool(text):
-    """Create a search tool that works with decoded/translated text."""
+    """Create a search tool that works with decoded/translated text.
+    
+    Args:
+        text: The text content to search through
+        
+    Returns:
+        A Tool instance configured for searching the text
+    """
+    if text is None:
+        raise ValueError("text cannot be None")
+        
     def search_func(query):
         """Custom search tool that searches through our processed text."""
         try:
@@ -996,10 +1013,13 @@ def create_search_tool(text):
             print(f"Search error: {str(e)}")
             return text
     
+    # Create and return a Tool instance
     return Tool(
         name="Search Document",
         func=search_func,
-        description="Search and extract information from the document. Use 'extract all' to get the complete document content."
+        description="""Search and extract information from the document. 
+        The document is pre-processed with encoding detection and contains page markers.
+        Use 'extract all' to get the complete document content."""
     )
 
 def research_converter_page():
