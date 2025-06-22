@@ -63,6 +63,7 @@ class ResearchAgents:
             research accessible to broader audiences. You excel at maintaining scientific 
             accuracy while making content engaging and understandable.""",
             llm=llm,
+            tools=[],
             memory=memory,
             allow_delegation=False,
             verbose=True
@@ -87,6 +88,7 @@ class ResearchAgents:
             creating clean, well-structured documents. You ensure content is organized 
             logically and presented professionally.""",
             llm=llm,
+            tools=[],
             memory=memory,
             allow_delegation=False,
             verbose=True
