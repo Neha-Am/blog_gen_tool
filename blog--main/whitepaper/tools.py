@@ -3,6 +3,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
+from langchain.agents import Tool
 
 class ResearchTools:
     """Collection of tools for research and content creation."""
@@ -16,7 +17,7 @@ class ResearchTools:
             gemini_api_key: Google API key for Gemini
             
         Returns:
-            A callable tool for searching PDF content
+            A Tool instance for searching PDF content
         """
         if not pdf_path:
             raise ValueError("PDF path is required")
@@ -104,7 +105,13 @@ class ResearchTools:
             except Exception as e:
                 return f"Error processing PDF: {str(e)}"
 
-        return search
+        return Tool(
+            name="Search Document",
+            func=search,
+            description="""Search and extract information from the PDF document. 
+            The document is pre-processed with encoding detection and contains page markers.
+            Use 'extract all' to get the complete document content."""
+        )
     
     @staticmethod
     def create_gemini_llm(api_key, temperature=0.3):
