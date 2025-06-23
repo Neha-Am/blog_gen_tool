@@ -227,19 +227,22 @@ class ResearchAgents:
         Returns:
             Configured Agent instance
         """
-        # Ensure we have a valid tool
-        if search_tool is None:
-            raise ValueError("search_tool cannot be None")
-            
-        # If it's already a Tool instance, use it directly
+        # Create a safe tools list
         if isinstance(search_tool, Tool):
             tools = [search_tool]
-        else:
+        elif callable(search_tool):
             # If it's a function, wrap it in a Tool
             tools = [Tool(
                 name="Search Document",
                 func=search_tool,
                 description="Search and extract information from the document. Use 'extract all' to get the complete document content."
+            )]
+        else:
+            # Provide a safe fallback tool that does nothing
+            tools = [Tool(
+                name="Dummy Search",
+                func=lambda x: "Search tool not properly initialized. Please upload a document.",
+                description="Placeholder search tool."
             )]
             
         return Agent(
@@ -1026,14 +1029,27 @@ def research_converter_page():
     st.title("Research PDF Converter")
     st.markdown("Upload a research PDF to convert it into structured, plain content")
 
-    # Initialize session state
+    # Initialize session state with defaults
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.current_outputs = None
         st.session_state.processed_text = None
         st.session_state.translated_text = None
-        st.session_state.search_tool = None
+        st.session_state.raw_text = None
         st.session_state.selected_model = "gemini-2.0-flash"  # Default model
+        # Initialize search_tool with a default empty Tool
+        st.session_state.search_tool = Tool(
+            name="Default Search",
+            func=lambda x: "Please upload a document to search.",
+            description="Default search tool before document upload."
+        )
+
+    # Debug section in sidebar
+    with st.sidebar:
+        st.subheader("Debug Information")
+        st.write("Session ID:", st.session_state.session_id)
+        st.write("Search Tool Status:", "Present" if st.session_state.get("search_tool") else "Missing")
+        st.write("Model:", st.session_state.get("selected_model"))
 
     # Ensure the exports directory exists
     ensure_export_dir()
@@ -1159,13 +1175,26 @@ def research_converter_page():
 
                     if st.button("Process PDF"):
                         try:
+                            # Verify search tool before processing
+                            if "search_tool" not in st.session_state or st.session_state.search_tool is None:
+                                st.error("Search tool not initialized. Please upload a document first.")
+                                return
+
                             # Initialize ResearchConverter with selected model
-                            converter = ResearchConverter(gemini_api_key=GOOGLE_API_KEY, 
-                                                       output_dir=temp_dir_path,
-                                                       model_name=st.session_state.selected_model)
+                            converter = ResearchConverter(
+                                gemini_api_key=GOOGLE_API_KEY, 
+                                output_dir=temp_dir_path,
+                                model_name=st.session_state.selected_model
+                            )
                             
-                            # Use our custom search tool instead of the default one
-                            researcher = ResearchAgents.create_researcher(converter.llm, st.session_state.search_tool)
+                            # Get the search tool with safe fallback
+                            search_tool = st.session_state.get("search_tool")
+                            if not isinstance(search_tool, Tool):
+                                st.error("Invalid search tool. Please try uploading the document again.")
+                                return
+                            
+                            # Create agents with proper tool handling
+                            researcher = ResearchAgents.create_researcher(converter.llm, search_tool)
                             content_creator = ResearchAgents.create_content_creator(converter.llm)
                             formatter = ResearchAgents.create_formatter(converter.llm)
                             
