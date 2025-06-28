@@ -1,7 +1,4 @@
-Here is a complete **step-by-step guide** on how to write a research paper in **IEEE (Institute of Electrical and Electronics Engineers) format**, including document structure, formatting rules, and tips to ensure IEEE compliance.
-
----
-
+readme
 ## 🧾 IEEE Paper Format – Overview
 
 IEEE format is a **structured academic writing style** used for engineering and technical research papers. It follows strict **layout**, **citation**, and **reference** formatting rules.
